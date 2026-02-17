@@ -1,0 +1,59 @@
+# Makefile unificado para benchmark del Modelo de Rashevsky
+# Compila y ejecuta Python, C++ y Fortran
+
+CXX = g++
+FC = gfortran
+PYTHON = python3
+
+CXXFLAGS = -std=c++17 -O3 -Wall
+FFLAGS = -O3 -Wall
+
+all: run
+
+# Compilar C++
+benchmark_cpp: benchmark.cpp
+	$(CXX) $(CXXFLAGS) -o benchmark_cpp benchmark.cpp
+
+# Compilar Fortran
+benchmark_f90: benchmark.f90
+	$(FC) $(FFLAGS) -o benchmark_f90 benchmark.f90
+
+# Ejecutar todos
+run: benchmark_cpp benchmark_f90
+	@echo "=================================="
+	@echo "Ejecutando benchmarks..."
+	@echo "=================================="
+	@echo ""
+	@$(PYTHON) benchmark.py
+	@echo ""
+	@./benchmark_cpp
+	@echo ""
+	@./benchmark_f90
+	@echo ""
+	@echo "=================================="
+	@echo "Archivos generados:"
+	@echo "  benchmark_python.dat"
+	@echo "  benchmark_cpp.dat"
+	@echo "  benchmark_fortran.dat"
+	@echo "=================================="
+
+# Comparar resultados
+compare: run
+	@echo ""
+	@echo "Comparacion de tiempos:"
+	@echo "=================================="
+	@echo "Python:"
+	@cat benchmark_python.dat
+	@echo ""
+	@echo "C++:"
+	@cat benchmark_cpp.dat
+	@echo ""
+	@echo "Fortran:"
+	@cat benchmark_fortran.dat
+	@echo "=================================="
+
+# Limpiar todo
+clean:
+	rm -f benchmark_cpp benchmark_f90 *.dat *.mod
+
+.PHONY: all run compare clean
