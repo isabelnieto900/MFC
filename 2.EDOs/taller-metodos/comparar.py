@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
+# Directorio base del script
+BASE = os.path.dirname(os.path.abspath(__file__))
+
 # Borrar gráficas anteriores para mantener orden
-for archivo in glob.glob('*.png'):
+for archivo in glob.glob(os.path.join(BASE, '*.png')):
     try:
         os.remove(archivo)
         print(f"Eliminado: {archivo}")
@@ -14,9 +17,9 @@ for archivo in glob.glob('*.png'):
 
 
 # Leer los datos de soluciones
-data_py = np.loadtxt('soluciones_python.dat')
-data_cpp = np.loadtxt('soluciones_cpp.dat')
-data_f90 = np.loadtxt('soluciones_fortran.dat')
+data_py = np.loadtxt(os.path.join(BASE, 'soluciones_python.dat'))
+data_cpp = np.loadtxt(os.path.join(BASE, 'soluciones_cpp.dat'))
+data_f90 = np.loadtxt(os.path.join(BASE, 'soluciones_fortran.dat'))
 
 t_py = data_py[:, 0]
 exacta_py = data_py[:, 1]
@@ -39,7 +42,7 @@ trapecio_f90 = data_f90[:, 4]
 # Leer datos de benchmark
 def leer_benchmark(nombre_archivo):
     tiempos = {}
-    with open(nombre_archivo, 'r') as ff:
+    with open(os.path.join(BASE, nombre_archivo), 'r') as ff:
         for linea in ff:
             partes = linea.strip().split()
             if len(partes) == 2:
@@ -203,4 +206,32 @@ for j, (metodo, idx) in enumerate(zip(metodos, [2,3,4])):
 plt.tight_layout()
 plt.savefig('comparacion_metodo_vs_lenguaje.png', dpi=150)
 print("Gráfica guardada: comparacion_metodo_vs_lenguaje.png")
+
+# =============================
+# NUEVA FIGURA: Barras por lenguaje
+# =============================
+lenguajes = ['Python', 'C++', 'Fortran']
+metodos = ['Euler', 'Taylor2', 'Trapecio']
+valores = [py_times, cpp_times, f90_times]  # cada uno es [Euler, Taylor2, Trapecio]
+colores = ['#e41a1c', '#377eb8', '#4daf4a']
+
+fig4, ax4 = plt.subplots(figsize=(10, 6))
+x = np.arange(len(lenguajes))
+ancho = 0.25
+for i, metodo in enumerate(metodos):
+    ax4.bar(x + (i-1)*ancho, [v[i] for v in valores], ancho, label=metodo, color=colores[i], alpha=0.8, edgecolor='black')
+    # Etiquetas arriba de cada barra
+    for j, v in enumerate(valores):
+        ax4.text(x[j] + (i-1)*ancho, v[i], f'{v[i]:.4f}s', ha='center', va='bottom', fontsize=9, fontweight='bold')
+
+ax4.set_xlabel('Lenguaje', fontsize=12, fontweight='bold')
+ax4.set_ylabel('Tiempo (s)', fontsize=12, fontweight='bold')
+ax4.set_title('Comparación de Tiempos por Lenguaje y Método', fontsize=14, fontweight='bold')
+ax4.set_xticks(x)
+ax4.set_xticklabels(lenguajes)
+ax4.legend(title='Método', fontsize=11)
+ax4.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.savefig('comparacion_lenguaje_vs_metodo.png', dpi=150)
+print("Gráfica guardada: comparacion_lenguaje_vs_metodo.png")
 
