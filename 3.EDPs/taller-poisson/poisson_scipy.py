@@ -13,6 +13,17 @@ import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy.sparse.linalg import spsolve
 
+def get_rss_mb():
+    """Lee VmRSS actual (no pico) de /proc/self/status."""
+    try:
+        with open('/proc/self/status') as f:
+            for line in f:
+                if line.startswith('VmRSS:'):
+                    return int(line.split()[1]) / 1024.0
+    except Exception:
+        pass
+    return 0.0
+
 # ── Condiciones de frontera ──────────────────────────────────────────────────
 bc_left  = lambda y: 1.0
 bc_right = lambda y: math.exp(2.0 * y)
@@ -32,6 +43,7 @@ def solve(N):
     sz = N * M
 
     t0 = time.perf_counter()
+    mem_before = get_rss_mb()
 
     A = lil_matrix((sz, sz), dtype=np.float64)
     b = np.zeros(sz)
@@ -59,12 +71,11 @@ def solve(N):
             b[k] += f_rhs(x, y)
 
     A_csr = csr_matrix(A)
-    # Memoria estimada: nnz × (8+8+4) bytes
-    mem_MB = A_csr.nnz * 20 / (1024**2)
 
     u = spsolve(A_csr, b)
 
     elapsed_ms = (time.perf_counter() - t0) * 1e3
+    mem_MB = get_rss_mb() - mem_before
 
     # Errores
     errL2 = 0.0; errMax = 0.0
@@ -111,7 +122,7 @@ def main():
         ms, mem, eL2, eMax, u, hx, hy = solve(N)
         print(f"Python/scipy  malla {N}x{N}  ({N*N} incógnitas)")
         print(f"  Tiempo    : {ms:.2f} ms")
-        print(f"  Mem. est. : {mem:.4f} MB")
+        print(f"  Mem. RSS  : {mem:.4f} MB")
         print(f"  Error L2  : {eL2:.6e}")
         print(f"  Error Max : {eMax:.6e}\n")
         mw.writerow([N, N*N, f"{ms:.4f}", f"{mem:.6f}", f"{eL2:.8e}", f"{eMax:.8e}"])

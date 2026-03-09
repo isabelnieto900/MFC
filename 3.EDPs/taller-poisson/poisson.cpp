@@ -29,7 +29,23 @@
 // ── Eigen (sparse) ──────────────────────────────────────────────────────────
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
-
+// ── Memoria real del proceso (VmRSS de /proc/self/status) ───────────────────
+static double get_rss_mb()
+{
+    std::ifstream f("/proc/self/status");
+    std::string line;
+    while (std::getline(f, line))
+    {
+        if (line.rfind("VmRSS:", 0) == 0)
+        {
+            std::istringstream ss(line.substr(6));
+            long kb;
+            ss >> kb;
+            return kb / 1024.0;
+        }
+    }
+    return 0.0;
+}
 // ════════════════════════════════════════════════════════════════════════════
 //  Funciones del problema
 // ════════════════════════════════════════════════════════════════════════════
@@ -78,6 +94,7 @@ std::vector<double> solve_eigen(const GridData &g,
     using T = Eigen::Triplet<double>;
 
     auto t0 = std::chrono::high_resolution_clock::now();
+    double mem_before = get_rss_mb(); // RSS antes de construir la matriz
 
     std::vector<T> triplets;
     triplets.reserve(5 * sz);
@@ -128,9 +145,6 @@ std::vector<double> solve_eigen(const GridData &g,
     A.setFromTriplets(triplets.begin(), triplets.end());
     A.makeCompressed();
 
-    // memoria estimada (entradas no nulas × 8 bytes × 2 para índices)
-    mem_MB = (A.nonZeros() * (8.0 + 8.0 + 4.0)) / (1024.0 * 1024.0);
-
     Eigen::SparseLU<SpMat> solver;
     solver.analyzePattern(A);
     solver.factorize(A);
@@ -143,6 +157,7 @@ std::vector<double> solve_eigen(const GridData &g,
 
     auto t1 = std::chrono::high_resolution_clock::now();
     elapsed_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    mem_MB = get_rss_mb() - mem_before; // delta RSS atribuible al solver
 
     return std::vector<double>(u.data(), u.data() + sz);
 }
@@ -234,7 +249,7 @@ int main(int argc, char *argv[])
     compute_errors(u, g, eL2, eMax);
 
     std::cout << "  Tiempo    : " << ms << " ms\n"
-              << "  Mem. est. : " << mem << " MB\n"
+              << "  Mem. RSS  : " << mem << " MB\n"
               << "  Error L2  : " << eL2 << "\n"
               << "  Error Max : " << eMax << "\n";
 

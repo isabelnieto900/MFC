@@ -49,6 +49,7 @@ subroutine solve_poisson(N)
     double precision    :: hx, hy, ax, ay, ac
     double precision    :: x, y, diff, errL2, errMax, mem_MB
     double precision    :: t0, t1, elapsed_ms
+    integer             :: mem_before_kb
 
     integer,          allocatable, target :: irn(:), jcn(:)
     double precision, allocatable, target :: aval(:), rhs(:), sol_exact(:)
@@ -72,6 +73,27 @@ subroutine solve_poisson(N)
     allocate(rhs(sz), sol_exact(sz))
     rhs   = 0.0d0
     nnz   = 0
+
+    ! Leer VmRSS antes de construir la matriz (para medir delta)
+    mem_before_kb = 0
+    block
+        integer :: up, ios
+        character(len=80) :: ln
+        integer :: kb2
+        open(newunit=up, file='/proc/self/status', status='old', action='read', iostat=ios)
+        if (ios == 0) then
+            do
+                read(up,'(A)',iostat=ios) ln
+                if (ios /= 0) exit
+                if (ln(1:6) == 'VmRSS:') then
+                    read(ln(7:),*) kb2
+                    mem_before_kb = kb2
+                    exit
+                end if
+            end do
+            close(up)
+        end if
+    end block
 
     call cpu_time(t0)
 
@@ -158,8 +180,26 @@ subroutine solve_poisson(N)
         stop
     end if
 
-    ! Memoria real usada por MUMPS (en MB)
-    mem_MB = dble(id%INFOG(22))   ! [MB] según documentación MUMPS
+    ! Memoria real del proceso (VmRSS de /proc/self/status)
+    block
+        integer :: unit_proc
+        character(len=80) :: line
+        integer :: kb
+        mem_MB = 0.0d0
+        open(newunit=unit_proc, file='/proc/self/status', status='old', action='read', iostat=kb)
+        if (kb == 0) then
+            do
+                read(unit_proc,'(A)',iostat=kb) line
+                if (kb /= 0) exit
+                if (line(1:6) == 'VmRSS:') then
+                    read(line(7:),*) kb
+                    mem_MB = dble(kb - mem_before_kb) / 1024.0d0
+                    exit
+                end if
+            end do
+            close(unit_proc)
+        end if
+    end block
 
     ! Finalizar MUMPS
     id%JOB = -2
@@ -178,7 +218,7 @@ subroutine solve_poisson(N)
     write(*,'(A,I0,A,I0,A,I0,A)') "Fortran/MUMPS  malla ", N, "x", N, &
                                     "  (", sz, " incognitas)"
     write(*,'(A,F12.4,A)') "  Tiempo    : ", elapsed_ms, " ms"
-    write(*,'(A,F10.4,A)') "  Mem. est. : ", mem_MB, " MB"
+    write(*,'(A,F10.4,A)') "  Mem. RSS  : ", mem_MB, " MB"
     write(*,'(A,ES12.4)')  "  Error L2  : ", errL2
     write(*,'(A,ES12.4)')  "  Error Max : ", errMax
 
