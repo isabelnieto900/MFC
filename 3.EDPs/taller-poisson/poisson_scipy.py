@@ -8,21 +8,10 @@ Uso:
     python poisson_scipy.py N --all     # corre 32 64 128 256
 """
 
-import sys, os, time, csv, math
+import sys, os, time, csv, math, tracemalloc
 import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy.sparse.linalg import spsolve
-
-def get_rss_mb():
-    """Lee VmRSS actual (no pico) de /proc/self/status."""
-    try:
-        with open('/proc/self/status') as f:
-            for line in f:
-                if line.startswith('VmRSS:'):
-                    return int(line.split()[1]) / 1024.0
-    except Exception:
-        pass
-    return 0.0
 
 # ── Condiciones de frontera ──────────────────────────────────────────────────
 bc_left  = lambda y: 1.0
@@ -43,7 +32,7 @@ def solve(N):
     sz = N * M
 
     t0 = time.perf_counter()
-    mem_before = get_rss_mb()
+    tracemalloc.start()
 
     A = lil_matrix((sz, sz), dtype=np.float64)
     b = np.zeros(sz)
@@ -75,7 +64,9 @@ def solve(N):
     u = spsolve(A_csr, b)
 
     elapsed_ms = (time.perf_counter() - t0) * 1e3
-    mem_MB = get_rss_mb() - mem_before
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    mem_MB = peak / 1024**2
 
     # Errores
     errL2 = 0.0; errMax = 0.0
