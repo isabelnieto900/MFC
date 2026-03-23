@@ -1,0 +1,519 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+
+\title{Espectro de energía del átomo de Litio (LiI)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Mediante la determinación del potencial efectivo en el que se mueve el electrón de valencia del átomo de litio, es posible determinar el espectro de energía del átomo. El método numérico empleado para la solución de la ecuación de Schrödinger consiste en la conversión de la ecuación diferencial, mediante la técnica de las diferencias finitas, en una ecuación algebraica.
+\end{abstract}
+
+\section{Introducción}
+
+El cálculo del espectro discreto de un átomo es una de las tareas fundamentales de la física atómica. En la literatura especializada, se han descrito numerosas técnicas con el fin de hacer la determinación aproximada de estos valores de energía [1]. En este trabajo, se desarrolla un procedimiento numérico simple basado en la conversión de la ecuación diferencial de Schrödinger en un problema algebraico. Como ejemplo de su aplicación, se calcula el espectro del electrón activo (electrón de valencia) del átomo de litio.
+
+Este sistema atómico alcalino, tiene un espectro muy similar al del átomo de hidrógeno y por eso se denomina un sistema cuasi-monoelectrónico. Sin considerar los efectos de intercambio electrónico ni de polarización, el electrón externo (\(nl\)) se "mueve" en el campo estático producido por el núcleo con carga \( Z = 3 \) y los dos electrones cuentan en el estado (\(1s\))\(^2\). Es de interés determinar, para este caso, el potencial \( V(r) \) que siente el electrón (\(nl\)) para posteriormente determinar en una primera aproximación sus niveles de energía. Para facilitar la discusión, el sistema formado por el núcleo (\( Z = 3 \)) y los dos electrones (\(1s\))\(^2\) es denotado como “core” atómico. Así, el electrón de valencia se “mueve” en el potencial efectivo \( V(r) \) creado por el “core” atómico.
+
+\section{Estado base del átomo de litio}
+
+Suponiendo un núcleo estacionario e ignorando las interacciones espín-órbita [2], el hamiltoniano del átomo de litio, en unidades atómicas, es
+\[
+H = -\frac{1}{2} \nabla_1^2 - \frac{Z}{r_1} - \frac{1}{2} \nabla_2^2 - \frac{Z}{r_2} - \frac{1}{2} \nabla_3^2 - \frac{Z}{r_3}
+\]
+\[
++ \frac{1}{|\mathbf{r}_1 - \mathbf{r}_2|} + \frac{1}{|\mathbf{r}_1 - \mathbf{r}_3|} + \frac{1}{|\mathbf{r}_2 - \mathbf{r}_3|}
+\]
+en donde \( Z \) es la carga del núcleo y \( \mathbf{r}_i \) designa la posición del i-ésimo electrón.
+
+En una aproximación sencilla, sin tomar en consideración la mezcla de configuraciones, en el estado base el átomo de litio dos de los electrones están en el estado \(1s\) y el otro electrón está en el estado \(2s\). Por lo tanto, la función de onda orbital del átomo es
+\[
+\Psi(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3) = \phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)\phi_{2s}(\mathbf{r}_3)
+\]
+aquí explícitamente se ha considerado el intercambio entre los electrones (\(1s\)) pero se ha ignorado el intercambio entre los electrones (\(1s\)) y (\(2s\)) [3]. Si consideramos, para efectos de cálculo de la energía, que los electrones (\(1s\)) y (\(2s\)) están descritos por las funciones de onda
+\[
+\phi_{1s}(r) = \sqrt{\frac{\alpha^3}{\pi}} e^{-\alpha r}
+\]
+\[
+y
+\]
+\[
+\phi_{2s}(r) = \sqrt{\frac{\alpha^3}{32\pi}}(2 - \beta r)e^{-\beta r/2}
+\]
+donde \( \alpha \) y \( \beta \) son parámetros variacionales que tienen en cuenta el apantallamiento nuclear, la energía del estado base del átomo de litio se determina, como es usual, mediante
+\[
+E(\alpha, \beta) = \langle \Psi | \hat{H} | \Psi \rangle
+\]
+
+Al tener en cuenta las funciones de onda (3) y (4), resulta para la energía
+\[
+E(\alpha, \beta) = 2\left(\phi_{1s} \left| -\frac{1}{2} \nabla^2 - \frac{Z}{r} \right| \phi_{1s}\right) + \left(\phi_{2s} \left| -\frac{1}{2} \nabla^2 - \frac{Z}{2} \right| \phi_{2s}\right)
+\]
+\[
++ \left(\phi_{1s} \left| \frac{1}{|\mathbf{r}_1 - \mathbf{r}_2|} \right| \phi_{1s}\right) + 2\left(\phi_{1s} \left| \frac{1}{|\mathbf{r}_1 - \mathbf{r}_3|} \right| \phi_{2s}\right).
+\]
+
+Al realizar las integrales, la expresión para la energía del estado base es
+\[
+E(\alpha, \beta) = \alpha^2 - 2Z\alpha + \frac{5}{8}\alpha + \frac{Z\beta}{4}
+\]
+\[
++ \frac{2\alpha\beta}{(2\alpha + \beta)^5}(8\alpha^4 + 20\alpha^3\beta + 12\alpha^2\beta^2 + 10\alpha\beta^3 + \beta^4)
+\]
+que depende de los parámetros variacionales \( \alpha \) y \( \beta \). De acuerdo con el principio del método variacional, la energía del estado base del átomo es el mínimo de \( E(\alpha, \beta) \) [4]. La minimización numérica para determinar \( \alpha \) y \( \beta \) óptimos que hacen la energía mínima, se realiza con el programa que se muestra a continuación que emplea el procedimiento de Powell descrito en Numerical Recipes capítulo 10 [5].
+
+\begin{verbatim}
+PROGRAM LITIO
+
+C===================================================================================
+C DETERMINACION DE LA ENERGIA DEL ESTADO BASE
+C MEDIANTE EL METODO VARIACIONAL.
+C CALCULO DE LA ENERGIA DE IONIZACION MEDIANTE EL
+C TEOREMA DE KOOPMANN
+C===================================================================================
+
+INTEGER NDIM
+REAL FTOL
+PARAMETER(NDIM=2,FTOL=1.0E-8)
+INTEGER I, ITER, NP
+REAL FRET,P(NDIM),XI(NDIM,NDIM),IP
+COMMON Z
+NP=NDIM
+DATA XI/1.0,0.0,0.0,1.0/
+DATA P/1.5,1.5/
+WRITE (6,*) 'CUAL ES EL VALOR DE Z '
+READ (5,*) Z
+CALL POWELL(P,XI,NDIM,NP,FTOL,ITER,FRET)
+WRITE (6,*) 'ITERATIONES:    =',ITER
+WRITE (6,*) 'ALFA, BETA    =',(P(I),I=1,NDIM)
+WRITE (6,*) 'ENER. DEL ESTADO BASE=',27.2*FRET
+WRITE (6,*) 'ENER. DE IONIZACION  =',27.2*IP(P(1),P(2))
+END
+
+C===========================================
+REAL FUNCTION FUNC(X)
+C ENERGIA VARIACIONAL PARA EL ESTADO BASE
+REAL X(2)
+COMMON Z
+A=X(1)
+B=X(2)
+Y=2.*A*B/((2.*A+B)**5)
+FUNC=A*A-2.*Z*A+(5./8.)*A+(1./8.)*B*B-(Z*B/4.)+
+& Y*(8.*A*A*A+A+20.*A*A*A*B+12.*A*A*B*B+
+& 10.*A*B*B+B*B*B*B)
+END
+
+C===========================================
+REAL FUNCTION IP(ALFA, BETA)
+C ENERGIA DE IONIZACION PARA EL ELECTRON DE VALENCIA
+COMMON Z
+A=ALFA
+B=BETA
+A2=A*A
+B2=B*B
+Y=2.*A*B/((2.*A+B)**5)
+IP=(1./8.)*B*B-(Z*B/4.)+
+& Y*(8.*A2*A2+20.*A2*A*B+12.*A2*B2+10.*A*B*B2+B2*B2)
+END
+
+C===========================================
+\end{verbatim}
+
+Los valores óptimos obtenidos al ejecutar el programa son
+
+\[
+\alpha = 2.675603
+\]
+\[
+\beta = 1.368016
+\]
+
+y la energía mínima es \( E = -201.033 \, \text{eV} \) valor muy cercano al valor experimental de \(-204.54 \, \text{eV}\) [6].
+
+Los parámetros \(\alpha\) y \(\beta\) los interpretamos como la carga nuclear efectiva que “ve” el electrón (\(1s\)) y (\(2s\)) respectivamente. Aunque es físicamente correcto considerar en el cálculo que \(\alpha \neq \beta\), se presenta una dificultad posterior y es que no existe ortogonalidad entre los estados (\(1s\)) y (\(2s\)) dada la forma de (3) y (4).
+
+Con el fin de no complicar los cálculos para este problema y tener explícitamente la ortogonalidad de los orbitales (\(1s\)) y (\(2s\)), se considera que \(\alpha = \beta\) en (3) y (4). Al minimizar, para este caso, la energía \(E(\alpha)\) se obtiene un valor de \(\alpha = 2.5359\) y una energía mínima \(E = -196.7457 \, \text{eV}\) cuyo valor no es tan bueno como en el caso cuando \(\alpha \neq \beta\) [6].
+
+Haciendo uso de la relación (7) para la energía del estado base es posible con ayuda del teorema de Koopman [7], determinar la energía de ionización (\(E.I.\)) que es igual a la energía del electrón de valencia. Esta energía de ionización está definida como
+
+\[
+E.I. = E_{Li+} - E_{Li} \tag{8}
+\]
+
+y su valor es \( E.I. = -4.58064 \, \text{eV} \) (cuando \(\alpha \neq \beta\)) y \( E.I. = -0.9143 \, \text{eV} \) (cuando \(\alpha = \beta\)). El valor experimental es de \(-5.39 \, \text{eV}\). Observamos que \( E.I. \) es mucho más preciso cuando \(\alpha \neq \beta\) pero tenemos la dificultad de la no ortogonalidad de la función de onda de los orbitales (\(1s\)) y (\(2s\)).
+
+\section{Potencial efectivo para el electrón de valencia}
+
+A partir de los resultados de la sección anterior para los parámetros \(\alpha\) y \(\beta\), es posible afirmar que los electrones (\(1s\)) están más fuertemente ligados que el electrón (\(2s\)) razón por la cual se puede suponer que el electrón de valencia se mueve en un efecto combinado del núcleo y los dos electrones (\(1s\)). Esta visión del sistema es muy simple, pues se están despreciando efectos tan importantes como el intercambio originado por la indistinguibilidad de los electrones y la polarización de los electrones internos que origina el electrón de valencia [8]. Sin embargo, el potencial estático que siente el electrón de valencia, que es originado por el núcleo y los dos electrones (\(1s\)), permite determinar en una primera aproximación el espectro del electrón de valencia y compararlo con el diagrama que se indica en la mayoría de libros de física atómica [9] [10].
+
+Con el fin de determinar el potencial efectivo para el electrón de valencia se parte de la ecuación de Schrödinger para el átomo de litio.
+
+\[
+H \Psi(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3) = E \Psi(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3) \tag{9}
+\]
+
+en donde el hamiltoniano está dado por la ecuación (1). Como se ha supuesto que no hay intercambio entre los electrones del core (\(1s\)) y el electrón de valencia (\(nl\)), la función de onda para el átomo en la configuración \((1s)^2(nl)\) es
+
+\[
+\Psi(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3) = \phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)\phi_{nl}(\mathbf{r}_3) \tag{10}
+\]
+
+al introducir esta función en (8) y realizar la proyección sobre los estados del core se obtiene
+
+\[
+\iint \phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)H\phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)\phi_{nl}(\mathbf{r}_3)d^3r_1d^3r_2 =
+\]
+\[
+E \iint \phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)\phi_{1s}(\mathbf{r}_1)\phi_{1s}(\mathbf{r}_2)\phi_{nl}(\mathbf{r}_3)d^3r_1d^3r_2 \tag{11}
+\]
+
+teniendo en cuenta la ortogonalidad de las funciones, la ecuación de Schrödinger para el electrón de valencia es
+
+\[
+-\frac{1}{2}\nabla^2 - \frac{Z}{r} + 2 \int \frac{\phi_{1s}^2(r')}{|\mathbf{r} - \mathbf{r}'|}d^3r' \phi_{nl}(\mathbf{r}) = E'\phi_{nl}(\mathbf{r}) \tag{12}
+\]
+
+\[
+-\frac{1}{2}\nabla^2 + V(r) \phi_{nl}(\mathbf{r}) = E'\phi_{nl}(\mathbf{r}) \tag{13}
+\]
+
+donde \(E'\) está dada por
+
+\[
+E' = E - 2 \int \phi_{1s}(r) \left( -\frac{1}{2}\nabla^2 - \frac{Z}{r} \right) \phi_{1s}(r)d^3r + \iint \frac{\phi_{1s}^2(r_1)\phi_{1s}^2(r_2)}{|\mathbf{r}_1 - \mathbf{r}_2|} d^3r_1 d^3r_2 \tag{14}
+\]
+
+Al considerar la forma explícita de la función de onda \(\phi_{1s}(r)\), dada por (3), el potencial efectivo \(V(r)\) que experimenta el electrón de valencia es:
+
+\[
+V(r) = -\frac{Z}{r} + \frac{2}{r} \left[ 1 - (1 + \alpha r)e^{-2\alpha r} \right] \tag{15}
+\]
+
+que se ilustra en la figura 1. Observamos de la figura que el potencial tiende para grandes distancias al potencial de Coulomb \((Z-2)/r\) lo que indica que los electrones (\(1s\)), apantallan el núcleo a gran distancia con un valor de 2 cargas electrónicas.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{potencial_litio.jpeg}
+\caption{Comparación del potencial efectivo del electrón de valencia del átomo de litio (línea roja) con el potencial Coulombiano \(-(Z - 2)/r\) (línea azul).}
+\label{fig:potencial}
+\end{figure}
+
+\section{Espectro del electrón de valencia}
+
+La ecuación de Schrödinger que determina el espectro del electrón de valencia es
+
+\[
+-\left(\frac{1}{2}\nabla^2 - \frac{1}{r} + \frac{2}{r}(1 + \alpha r)e^{-2\alpha r}\right)\phi_{nl}(\mathbf{r}) = E'\phi_{nl}(\mathbf{r}), \tag{16}
+\]
+
+teniendo en cuenta que el potencial es central, la determinación del espectro se reduce a solucionar el problema de valores propios radial
+
+\[
+\left(-\frac{1}{2}\frac{d^2R}{dr^2} - V_{\text{efec}}(r)\right)R(r) = E'R(r) \tag{17}
+\]
+
+con
+
+\[
+V_{\text{efec}}(r) = -\frac{1}{r} + \frac{2}{r}(1 + \alpha r)e^{-2\alpha r} + \frac{l(l+1)}{r^2} \tag{18}
+\]
+
+La estrategia numérica empleada, en este trabajo, para calcular tanto los valores de energía como las funciones propias del electrón de valencia se fundamenta en el empleo de la técnica de las diferencias finitas aplicada a la ecuación (16). Para tal fin, se considera \( D \) como la distancia para la cual el potencial efectivo \( V_{\text{efec}}(r) \) es aproximadamente cero y dividamos el intervalo \( 0 \leq r \leq D \) en \( N \) intervalos iguales, así cada punto de la malla está definido como \( r_j = jh \), \( j = 0(1),\ldots,N \) con \( h = D/N \) y definimos \( R_j = R(jh) \). Siguiendo los procedimientos tradicionales para deducir las ecuaciones de diferencias finitas [11], se tiene para la segunda derivada
+
+\[
+R_j'' = \frac{R_{j-1} - 2R_j + R_{j+1}}{h^2} + O(h^2).
+\]
+
+Con estas aproximaciones para las derivadas continuas en la ecuación (16) se convierte en [5]:
+
+\[
+R_{j-1} + \left[2h^2E - 2h^2V_{\text{efec}}(r_j) - 2\right] R_j + R_{j+1} = 0.
+\]
+
+Al escribir estas ecuaciones en forma compacta, tenemos el problema de valores propios
+
+\[
+\mathbb{A}(E)\mathbb{R} = 0
+\]
+
+en donde \( \mathbb{A} \) es la matriz tridiagonal
+
+\[
+\begin{pmatrix}
+A_1 & 1 \\
+1 & A_2 & 1 \\
+& 1 & A_3 & 1 \\
+& & 1 & A_4 & \ddots \\
+& & & \ddots & \ddots \\
+& & & & 1 & A_N
+\end{pmatrix}
+\]
+
+con
+
+\[
+A_i = -2 + 2h^2[E - V_{\text{efec}}(r_i)] \quad i = 1(1)N
+\]
+
+Los valores propios \( E \) asociados al problema, se hallan como soluciones de
+
+\[
+P_N(E) = \det \mathbb{A}(E) = 0.
+\]
+
+Ahora, la evaluación del determinante \( P_N(E) \) de la matriz tridiagonal se encuentra fácilmente mediante la relación de recurrencia [12]:
+
+\[
+P_{i+1} = A_{i+1}P_i - P_{i-1} \quad i = 1(1)N - 1
+\]
+
+\[
+P_0 = 1 \quad P_1 = A_1
+\]
+
+en donde \( P_i \) es el determinante de la submatriz de orden \( i \) de \( \mathbb{A} \).
+
+\section{Programa de cómputo}
+
+Para determinar los valores propios y las funciones propias para el electrón de valencia, se debe solucionar la ecuación de valores propios como se indicó anteriormente. Los valores propios que son la solución de \( \det \mathbb{A}(E) = 0 \) se encuentran mediante las rutinas ZBRAK y ZBRENT como está descrito en el libro Numerical Recipes [5]. Posteriormente, con el conocimiento de los valores propios, los vectores propios de (16) se determinan con ayuda del método estándar de la iteración inversa [13]. La iteración inversa que se consideró en el programa está dada por
+
+\[
+\mathbb{A}(E_j)\mathbb{R}^{(m+1)} = \mathbb{R}^{(m)}.
+\]
+
+Teniendo en cuenta que para el valor \( E_j \) determinado numéricamente, la matriz \( \mathbb{A} \) es casi diagonal. Se puede demostrar que el efecto del procedimiento de la iteración inversa es amplificar, en el vector arbitrario de arranque \( \mathbb{R}^{(1)} \) la componente del vector propio correspondiente al valor propio \( E_j \). En el proceso de cómputo, el nuevo vector generado \( \mathbb{R}^{(m+1)} \) es normalizado con el fin de evitar overflow en el cálculo de los vectores propios. A continuación, se muestra el programa que determina la solución de la ecuación (16) para el espectro del átomo de litio.
+
+\begin{verbatim}
+PROGRAM LITIO
+
+C---
+C============================================
+C    PROGRAMA PARA DETERMINAR EL ESPECTRO Y
+C    FUNCIONES PROPIAS DEL ATOMO DE LITIO
+C===========================================
+\end{verbatim}
+\begin{verbatim}
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+      NPT
+      NBMAX
+      XB1, XB2 (NBMAX)
+C
+C
+      ENERGIA
+      DIAG
+      SUPERD
+      SUBD
+      VK
+      VKM1
+      H
+      ELE
+      NN
+
+      DIMENSION DE LA MATRIZ
+      (NBMAX)
+      VECTOR DE DIMENSION NPT QUE CONTIENE
+      EL POTENCIAL EFECTIVO.
+      VECTOR DE DIMENSION NBMAX CUYOS
+      ELEMENTOS REPRESENTAN LOS VALORES
+      PROPIOS PARA EL MOMENTUM ANGULAR ELE
+      VECTOR DE DIMENSION NPT QUE REPRESENTA
+      LA DIAGONAL DE LA MATRIZ
+      VECTOR DE DIMENSION NPT QUE REPRESENTA
+      LA SUPERDIAGONAL DE LA MATRIZ
+      VECTOR DE DIMENSION NPT QUE REPPRESENTA
+      LA SUBDIAGONAL DE LA MATRIZ
+      VECTOR DE DIMENSION NPT QUE REPRESENTA
+      EL VECTOR PROPIO CORRESPONDIENTE A LA
+      ENERGIA=ENERGIA(J), J=1,2,....
+      VECTOR DE DIMENSION NPT QUE REPRESENTA
+      EL VECTOR PROPIO (NO-NORMALIZADO)
+      QUE ENTREGA EL METODO DE ITERACION
+      INVERSA
+      PASO DE DISCRETIZACION
+      MOMENTUM ANGULAR
+
+      IMPLICIT REAL*8(A-H,0-Z)
+      PARAMETER(NPT=6000, NBMAX=1000)
+      DIMENSION XB1(NBMAX), XB2(NBMAX), C(NPT),
+     & ENERGIA(NBMAX), DIAG(NPT), SUPERD(NPT),
+     & SUBD(NPT), VK(NPT), VKM1(NPT)
+
+      COMMON H, ELE, NN
+      EXTERNAL DETERM
+      NN=NPT
+
+!     DISTANCIA PARA LA
+!     CUAL EL POT ES
+
+      WRITE(6,*) 'MOMENTUM ANGULAR='
+      READ(5,*) ELE
+
+      H=D/FLOAT(NPT)                 ! PASO
+      X1=-10.D0                      ! RANGOS DE BUSQUEDA
+      X2=0.D0                        ! DE LOS VALORES PROPIOS
+      NB=NBMAX
+      CALCULO DE LOS VALORES PROPIOS
+      CALL ZBRAK(DETERM,X1,X2,N,XB1,XB2,NB)
+      JJ=0
+      DO I=1,NB
+         TOL=(1.0D-12)*(XB1(I)+XB2(I))/2.D0
+         RAIZ=ZBRENT(DETERM,XB1(I),XB2(I),TOL)
+         JJ=JJ+1
+         ENERGIA(JJ)=RAIZ
+         WRITE(6,*)
+     &   'VALOR PROPIO',JJ, 27.2*ENERGIA(JJ), DETERM(RAIZ)
+      END DO
+
+C
+C     CALCULO DE LAS FUNCIONES DE ONDA NORMALIZADAS
+      OPEN (10,FILE='LITIO.DAT')
+      DO I=1,NPT
+         C(I)=POT(H*FLOAT(I))
+      END DO
+      DO J=1,JJ
+         VP=ENERGIA(J)
+         DO K=1,NPT
+            DIAG(K)=2.D0+2.D0*H*H*C(K)-2.D0*H*H*VP
+         END DO
+         DO K=1,NPT-1
+            SUPERD(K)=-1.D0
+         END DO
+         DO K=2,NPT
+            SUBD(K)=-1.D0
+         END DO
+\end{verbatim}
+\begin{verbatim}
+         DO K=1,NPT                 ! VECTOR DE ARRANQUE
+            VK(K)=0.D0
+         END DO
+         VK(1)=1.
+         DO KK=1,10                 ! BUSQUEDA DE LA FUNCION
+                                    ! PROPIA
+            CALL TRIDAG(SUBD,DIAG,SUPERD,VK,VKM1,NPT)
+            CALL NORMA(NPT,VKM1,VK) ! NORMALIZACION DEL VECTOR
+         END DO
+         DO I=1,NPT,10
+            WRITE(10,*) FLOAT(I)*H, VK(I)
+         END DO
+         WRITE(10,'('')')
+      END DO
+      CLOSE(10)
+      END
+
+C===============
+
+      FUNCTION POT(X)
+      IMPLICIT REAL*8(A-H,O-Z)
+      COMMON H,ELE,NN
+C     POTENCIAL EFECTIVO PARA EL ELECTRON DE VALENCIA
+      ALFA=2.535930D0
+      POT=- (1.D0/X)-(2.D0/X)*(1.D0+ALFA*X)*DEXP(-2.D0*ALFA*X)
+      POT=POT+ELE*(ELE+1.D0)/(2.D0*X*X)
+      RETURN
+      END
+
+C===============
+
+      FUNCTION DETERM(X)
+      IMPLICIT REAL*8(A-H,O-Z)
+      COMMON H,ELE,NN
+      H2=H*H
+      P0=0.D0
+      P1=(2.D0+2.D0*H2*POT(H)-2.D0*X*H2)
+      DO I=2,N
+         P2=(2.D0+2.D0*H2*POT(H*FLOAT(I))-2.D0*H2*X)*P1-P0
+         P0=P1
+         P1=P2
+      END DO
+\end{verbatim}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{funciones_onda_litio.jpeg}
+\caption{Función de onda radial obtenida para el electrón de valencia del litio. (a) Estados (2s), (3s), (4s). (b) Estados (2p), (3p).}
+\label{fig:funciones_onda}
+\end{figure}
+
+\begin{verbatim}
+      DETERM=P2
+      RETURN
+      END
+
+C===============
+\end{verbatim}
+
+\section{Conclusiones}
+
+El programa anterior permite la opción de determinar los valores y las funciones propias para diferentes valores del momentum angular orbital \(l\). En la siguiente tabla se indican los valores de la energía (en eV) para los diferentes estados (\(nl\)) y se compara con los valores experimentales [6] y los valores del espectro del átomo del hidrógeno [1].\\
+\begin{table}[h]
+\centering
+\caption{Valores de energía (en eV) para los diferentes estados del electrón de valencia del litio.}
+\label{tab:energias}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\((nl)\) & \(E_{\text{calc}}\) & \(E_{\text{Exp}}\) & \(At.\;Hidrög.\) \\
+\hline
+\(2s\) & \(-4.6994\) & \(-5.39\) & \(-3.401\) \\
+\hline
+\(3s\) & \(-1.8527\) & \(-2.02\) & \(-1.512\) \\
+\hline
+\(4s\) & \(-0.7201\) & \(-1.05\) & \(-0.850\) \\
+\hline
+\(2p\) & \(-3.4306\) & \(-3.54\) & \(-3.401\) \\
+\hline
+\(3p\) & \(-1.5050\) & \(-1.56\) & \(-1.512\) \\
+\hline
+\(3d\) & \(-1.5048\) & \(-1.51\) & \(-1.512\) \\
+\hline
+\end{tabular}
+\end{table}
+
+se observa que los estados más sensibles a la forma del potencial del core atómico son los estados \(s\) debido a que son los más penetrantes en la nube electrónica del core atómico (figura 2-a). Los estados \(p\), (figura 2-b) por su parte, son menos penetrantes y por tanto no son tan sensibles a la forma del potencial. Igualmente sucede con los estados \(d\). En la última columna de la tabla, se indican los valores de energía del espectro del átomo de hidrógeno y se observa que a medida que el número cuántico principal aumenta, el espectro del electrón de valencia del átomo de litio es bastante parecido con el del átomo de hidrógeno confirmando que su espectro es muy similar a un átomo monoeléctrico.
+
+\section*{Referencias}
+
+\begin{enumerate}
+\item Cowan R. D. \textit{The Theory of Atomic Structure and Spectra} (Los Alamos Series in Basic and Applied Sciences) University of California Press. 1981
+
+\item Flügge S. \textit{Practical Quantum Mechanics}. Springer Verlag 1974
+
+\item Davydov A. S. \textit{Quantum Mechanics}. Pergamon Press 1965
+
+\item Shankar R. \textit{Principles of Quantum Mechanics}. Plenum Press 1994
+
+\item Press W., Flannery B.P., Teukolsky S. A., Vetterling W. \textit{Numerical Recipes}. Cambridge. 1992
+
+\item National Institute of Standard and Technology. \url{http://physics.nist.gov/PhysRefData/contents.html}
+
+\item McWeeny R. \textit{Methods of Molecular Quantum Mechanics}. Academic Press 1989
+
+\item Albright A., Bartschat K., Flicek P. R. J. Phys. B 19 2469 1986
+
+\item Wichmann E. H. Berkeley \textit{Physics Course: Quantum Physics}. McGraw-Hill 1971
+
+\item Brandsen B. H., Joachain C.J. \textit{Physics of Atoms and Molecules}. Longman 1983
+
+\item Evans G., Blackledge J., Yardley P. \textit{Numerical Methods for Partial Differential Equations}. Springer 2000
+
+\item Vries P. L. \textit{A First Course in Computational Physics}. Wiley \& Sons 1994
+
+\item Trefethen L., Bay D. \textit{Numerical Linear Algebra}. SIAM 1997
+\end{enumerate}
+\end{document}
