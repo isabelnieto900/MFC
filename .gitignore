@@ -1,2 +1,33 @@
 venv/*
+# Fortran and C/C++ executables
+*.exe
+*.out
+*.o
+*.mod
+*.a
+*.so
+*.dll
+*.dylib
+*.pyc
+*.pyo
+*.pyd
+*.class
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.DS_Store
+# Fortran-specific
+litio_variacional_actualizado
+litio_espectro_fd_actualizado
+litio_variacional_nr_repl
+litio_espectro_nr_repl
+litio_nr_pipeline
+benchmark_cpp
+benchmark_f90
+benchmark
+# General
+__pycache__/
+*.ipynb_checkpoints/
 
