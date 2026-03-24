@@ -24,6 +24,8 @@ litio_espectro_fd_actualizado
 litio_variacional_nr_repl
 litio_espectro_nr_repl
 litio_nr_pipeline
+litio_pipeline_cpp
+litio_shooting
 benchmark_cpp
 benchmark_f90
 benchmark
