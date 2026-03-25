@@ -4,11 +4,11 @@ program litio_shooting
 
   integer, parameter :: dp = kind(1.0d0)
   integer, parameter :: n_states = 6
-  integer, parameter :: n_grid = 20000
+  integer, parameter :: n_grid = 6000
 
   real(dp), parameter :: alpha = 2.535930_dp
   real(dp), parameter :: r_min = 1.0d-4
-  real(dp), parameter :: r_max = 120.0_dp
+  real(dp), parameter :: r_max = 25.0_dp
   real(dp), parameter :: e_min = -0.30_dp
   real(dp), parameter :: e_max = -1.0d-4
   real(dp), parameter :: e_tol = 1.0d-10
@@ -76,7 +76,8 @@ contains
     real(dp) :: centrifugal
 
     centrifugal = real(l * (l + 1), dp) / (2.0_dp * r * r)
-    v_eff = (-1.0_dp / r) + (2.0_dp / r) * (1.0_dp + alpha * r) * exp(-2.0_dp * alpha * r) + centrifugal
+    ! Consistente con DF/Sturm: termino de apantallamiento atractivo (signo negativo).
+    v_eff = (-1.0_dp / r) - (2.0_dp / r) * (1.0_dp + alpha * r) * exp(-2.0_dp * alpha * r) + centrifugal
   end function v_eff
 
   subroutine rhs_system(r, y1, y2, e, l, dy1, dy2)
@@ -158,72 +159,91 @@ contains
     logical, intent(out) :: ok
 
     integer, parameter :: n_scan = 24000
-    integer :: i, nodes_mid, best_i
-    real(dp) :: de, e_trial, f_trial
-    real(dp) :: best_res, best_e
-    real(dp) :: e_left, e_right, f_left, f_right
-    integer :: nodes_left, nodes_right
-    logical :: has_best
+    integer :: i, it, nodes_left, nodes_right, nodes_mid
+    real(dp) :: de, e_left, e_right, e_mid
+    real(dp) :: f_left, f_right, f_mid
+    real(dp) :: e_prev, f_prev
+    integer :: nodes_prev
+    logical :: has_bracket
 
     ok = .false.
     e_star = 0.0_dp
-    has_best = .false.
-    best_res = huge(1.0_dp)
-    best_e = 0.0_dp
-    best_i = -1
+    has_bracket = .false.
 
     de = (e_hi - e_lo) / real(n_scan - 1, dp)
 
-    do i = 1, n_scan
-      e_trial = e_lo + real(i - 1, dp) * de
-      call endpoint_and_nodes(e_trial, l, f_trial, nodes_mid)
+    e_prev = e_lo
+    call endpoint_and_nodes(e_prev, l, f_prev, nodes_prev)
 
-      if (ieee_is_finite(f_trial) .and. nodes_mid == target_nodes) then
-        if (abs(f_trial) < best_res) then
-          best_res = abs(f_trial)
-          best_e = e_trial
-          best_i = i
-          has_best = .true.
+    do i = 2, n_scan
+      e_mid = e_lo + real(i - 1, dp) * de
+      call endpoint_and_nodes(e_mid, l, f_mid, nodes_mid)
+
+      if (ieee_is_finite(f_prev) .and. ieee_is_finite(f_mid)) then
+        if (nodes_prev == target_nodes .and. nodes_mid == target_nodes) then
+          if (f_prev * f_mid <= 0.0_dp) then
+            e_left = e_prev
+            e_right = e_mid
+            f_left = f_prev
+            f_right = f_mid
+            nodes_left = nodes_prev
+            nodes_right = nodes_mid
+            has_bracket = .true.
+            exit
+          end if
+        end if
+      end if
+
+      e_prev = e_mid
+      f_prev = f_mid
+      nodes_prev = nodes_mid
+    end do
+
+    if (.not. has_bracket) then
+      ! Fallback: toma el ultimo tramo dentro del conteo objetivo.
+      do i = 1, n_scan
+        e_mid = e_lo + real(i - 1, dp) * de
+        call endpoint_and_nodes(e_mid, l, f_mid, nodes_mid)
+        if (ieee_is_finite(f_mid) .and. nodes_mid == target_nodes) then
+          e_star = e_mid
+          ok = .true.
+        end if
+      end do
+      return
+    end if
+
+    do it = 1, 200
+      e_mid = 0.5_dp * (e_left + e_right)
+      call endpoint_and_nodes(e_mid, l, f_mid, nodes_mid)
+
+      if (.not. ieee_is_finite(f_mid)) then
+        exit
+      end if
+
+      if (abs(e_right - e_left) < tol) exit
+
+      if (nodes_mid < target_nodes) then
+        e_left = e_mid
+        f_left = f_mid
+        nodes_left = nodes_mid
+      else if (nodes_mid > target_nodes) then
+        e_right = e_mid
+        f_right = f_mid
+        nodes_right = nodes_mid
+      else
+        if (f_left * f_mid <= 0.0_dp) then
+          e_right = e_mid
+          f_right = f_mid
+          nodes_right = nodes_mid
+        else
+          e_left = e_mid
+          f_left = f_mid
+          nodes_left = nodes_mid
         end if
       end if
     end do
 
-    if (.not. has_best) return
-
-    ! Refinamiento local simple alrededor del mejor punto de la malla de energia.
-    e_star = best_e
-    if (best_i > 1 .and. best_i < n_scan) then
-      e_left = e_lo + real(best_i - 2, dp) * de
-      e_right = e_lo + real(best_i, dp) * de
-
-      call endpoint_and_nodes(e_left, l, f_left, nodes_left)
-      call endpoint_and_nodes(e_right, l, f_right, nodes_right)
-
-      if (nodes_left == target_nodes .and. abs(f_left) < best_res) then
-        best_res = abs(f_left)
-        e_star = e_left
-      end if
-      if (nodes_right == target_nodes .and. abs(f_right) < best_res) then
-        best_res = abs(f_right)
-        e_star = e_right
-      end if
-    end if
-
-    if (de > tol) then
-      ! Mantiene compatibilidad con la firma original: aplica una sola correccion fina.
-      e_left = max(e_lo, e_star - 0.5_dp * de)
-      e_right = min(e_hi, e_star + 0.5_dp * de)
-      call endpoint_and_nodes(e_left, l, f_left, nodes_left)
-      call endpoint_and_nodes(e_right, l, f_right, nodes_right)
-      if (nodes_left == target_nodes .and. abs(f_left) < best_res) then
-        best_res = abs(f_left)
-        e_star = e_left
-      end if
-      if (nodes_right == target_nodes .and. abs(f_right) < best_res) then
-        best_res = abs(f_right)
-        e_star = e_right
-      end if
-    end if
+    e_star = 0.5_dp * (e_left + e_right)
 
     ok = .true.
   end subroutine find_state_energy_nodes

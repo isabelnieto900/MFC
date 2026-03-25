@@ -1,0 +1,7 @@
+# Energías predichas por Red Neuronal Multioutput
+# Columna 1: Nivel N | Columna 2: E (Ha) | Columna 3: E (eV)
+# Comparación con valores reales del archivo energias_paper.dat
+
+N     E_pred (Ha)     E_pred (eV)     E_real (Ha)     E_real (eV)     Error (eV)
+---------------------------------------------------------------------------
+1     -0.0010979453   -0.0298761893   -0.1726977531   -4.6992785605   4.669403  

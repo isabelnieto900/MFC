@@ -32,4 +32,4 @@ benchmark
 # General
 __pycache__/
 *.ipynb_checkpoints/
-
+PARCIAL/PINN/tuner_dir/litio_wavefunctions
