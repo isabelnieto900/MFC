@@ -4,17 +4,17 @@ program litio_nr_pipeline
   implicit none
 
   integer, parameter :: dp = kind(1.0d0)
-  integer, parameter :: npt = 2200, nbmax = 1000
+  integer, parameter :: npt = 16000, nbmax = 1000
   real(dp), parameter :: hartree_to_ev = 27.211386245988d0
 
-  integer :: i, nfound_s, nfound_p
+  integer :: i, nfound_s, nfound_p, nfound_d
   real(dp) :: z
   real(dp) :: alpha0, beta0, alpha_opt, beta_opt, e0, ei
   integer :: it
 
   real(dp) :: r(npt), vc(npt), veff(npt)
-  real(dp) :: rs2(npt), rs3(npt), rs4(npt), rp2(npt), rp3(npt)
-  real(dp) :: e_s(nbmax), e_p(nbmax)
+  real(dp) :: rs2(npt), rs3(npt), rs4(npt), rp2(npt), rp3(npt), rd3(npt)
+  real(dp) :: e_s(nbmax), e_p(nbmax), e_d(nbmax)
   real(dp), save :: h_spec, ele_spec, z_spec, alpha_spec
   integer, save :: nn_spec
 
@@ -37,15 +37,18 @@ program litio_nr_pipeline
   call build_potential_table(z, 2.535930d0, npt, r, vc, veff)
   call solve_l_spectrum(z, 2.535930d0, 0.0d0, npt, -10.0d0, 0.0d0, 2500, e_s, nfound_s)
   call solve_l_spectrum(z, 2.535930d0, 1.0d0, npt, -10.0d0, 0.0d0, 2500, e_p, nfound_p)
+  call solve_l_spectrum(z, 2.535930d0, 2.0d0, npt, -10.0d0, 0.0d0, 2500, e_d, nfound_d)
 
   if (nfound_s < 4) stop 'No se encontraron suficientes estados s para 2s/3s/4s'
   if (nfound_p < 2) stop 'No se encontraron suficientes estados p para 2p/3p'
+  if (nfound_d < 1) stop 'No se encontro estado d para 3d'
 
   call wave_for_energy(z, 2.535930d0, 0.0d0, npt, e_s(2), rs2)
   call wave_for_energy(z, 2.535930d0, 0.0d0, npt, e_s(3), rs3)
   call wave_for_energy(z, 2.535930d0, 0.0d0, npt, e_s(4), rs4)
   call wave_for_energy(z, 2.535930d0, 1.0d0, npt, e_p(1), rp2)
   call wave_for_energy(z, 2.535930d0, 1.0d0, npt, e_p(2), rp3)
+  call wave_for_energy(z, 2.535930d0, 2.0d0, npt, e_d(1), rd3)
 
   open(10, file='potential_litio.dat', status='replace', action='write')
   write(10,'(a)') '# r(a.u.)  Vcoulomb(Ha)  Veff(Ha)'
@@ -55,9 +58,9 @@ program litio_nr_pipeline
   close(10)
 
   open(11, file='funciones_radiales_litio.dat', status='replace', action='write')
-  write(11,'(a)') '# r(a.u.)  R_2s  R_3s  R_4s  R_2p  R_3p'
+  write(11,'(a)') '# r(a.u.)  R_2s  R_3s  R_4s  R_2p  R_3p  R_3d'
   do i = 1, npt
-    write(11,'(6(es22.14,1x))') r(i), rs2(i), rs3(i), rs4(i), rp2(i), rp3(i)
+    write(11,'(7(es22.14,1x))') r(i), rs2(i), rs3(i), rs4(i), rp2(i), rp3(i), rd3(i)
   end do
   close(11)
 
@@ -68,6 +71,7 @@ program litio_nr_pipeline
   write(12,'(a,1x,i1,1x,es22.14,1x,es22.14)') '4s', 0, e_s(4), e_s(4)*hartree_to_ev
   write(12,'(a,1x,i1,1x,es22.14,1x,es22.14)') '2p', 1, e_p(1), e_p(1)*hartree_to_ev
   write(12,'(a,1x,i1,1x,es22.14,1x,es22.14)') '3p', 1, e_p(2), e_p(2)*hartree_to_ev
+  write(12,'(a,1x,i1,1x,es22.14,1x,es22.14)') '3d', 2, e_d(1), e_d(1)*hartree_to_ev
   close(12)
 
   print *, 'Archivos generados:'

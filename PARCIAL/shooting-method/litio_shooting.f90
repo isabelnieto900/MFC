@@ -4,12 +4,12 @@ program litio_shooting
 
   integer, parameter :: dp = kind(1.0d0)
   integer, parameter :: n_states = 6
-  integer, parameter :: n_grid = 6000
+  integer, parameter :: n_grid = 20000
 
   real(dp), parameter :: alpha = 2.535930_dp
   real(dp), parameter :: r_min = 1.0d-4
-  real(dp), parameter :: r_max = 35.0_dp
-  real(dp), parameter :: e_min = -10.0_dp
+  real(dp), parameter :: r_max = 120.0_dp
+  real(dp), parameter :: e_min = -0.30_dp
   real(dp), parameter :: e_max = -1.0d-4
   real(dp), parameter :: e_tol = 1.0d-10
   real(dp), parameter :: ev_per_au = 27.211386_dp
@@ -21,7 +21,7 @@ program litio_shooting
   real(dp), dimension(n_grid) :: r_grid, r_tmp
   real(dp), dimension(n_grid, n_states) :: waves
 
-  integer :: i, k, rank_l
+  integer :: i
   logical :: ok
 
   labels = [character(len=8) :: '2s', '3s', '4s', '2p', '3p', '3d']
@@ -36,12 +36,7 @@ program litio_shooting
 
   write(*, '(a)') 'Resolviendo espectro del Litio con metodo de shooting...'
   do i = 1, n_states
-    rank_l = 1
-    do k = 1, i - 1
-      if (lvals(k) == lvals(i)) rank_l = rank_l + 1
-    end do
-
-    call find_state_energy_rank(lvals(i), rank_l, e_min, e_max, e_tol, energies_au(i), ok)
+    call find_state_energy_nodes(lvals(i), target_nodes(i), e_min, e_max, e_tol, energies_au(i), ok)
     if (.not. ok) then
       write(*, '(a,a)') 'No se encontro estado para: ', trim(labels(i))
       stop 1
@@ -156,72 +151,82 @@ contains
     endpoint = y1
   end subroutine endpoint_and_nodes
 
-  subroutine find_state_energy_rank(l, rank_target, e_lo, e_hi, tol, e_star, ok)
-    integer, intent(in) :: l, rank_target
+  subroutine find_state_energy_nodes(l, target_nodes, e_lo, e_hi, tol, e_star, ok)
+    integer, intent(in) :: l, target_nodes
     real(dp), intent(in) :: e_lo, e_hi, tol
     real(dp), intent(out) :: e_star
     logical, intent(out) :: ok
 
-    integer, parameter :: n_scan = 12000
-    integer :: i, nodes_mid
-    real(dp) :: de, ea, eb, em, fa, fb, fm, last_e, last_f, cur_e, cur_f
-    real(dp) :: last_root
-    integer :: iter, max_iter
-    integer :: roots_found
+    integer, parameter :: n_scan = 24000
+    integer :: i, nodes_mid, best_i
+    real(dp) :: de, e_trial, f_trial
+    real(dp) :: best_res, best_e
+    real(dp) :: e_left, e_right, f_left, f_right
+    integer :: nodes_left, nodes_right
+    logical :: has_best
 
     ok = .false.
     e_star = 0.0_dp
-    max_iter = 180
-    last_root = huge(1.0_dp)
-    roots_found = 0
+    has_best = .false.
+    best_res = huge(1.0_dp)
+    best_e = 0.0_dp
+    best_i = -1
 
     de = (e_hi - e_lo) / real(n_scan - 1, dp)
-    last_e = e_lo
-    call endpoint_and_nodes(last_e, l, last_f, nodes_mid)
 
-    do i = 2, n_scan
-      cur_e = e_lo + real(i - 1, dp) * de
-      call endpoint_and_nodes(cur_e, l, cur_f, nodes_mid)
+    do i = 1, n_scan
+      e_trial = e_lo + real(i - 1, dp) * de
+      call endpoint_and_nodes(e_trial, l, f_trial, nodes_mid)
 
-      if (ieee_is_finite(last_f) .and. ieee_is_finite(cur_f) .and. last_f * cur_f <= 0.0_dp) then
-        ea = last_e
-        eb = cur_e
-        fa = last_f
-        fb = cur_f
-
-        do iter = 1, max_iter
-          em = 0.5_dp * (ea + eb)
-          call endpoint_and_nodes(em, l, fm, nodes_mid)
-
-          if (abs(fm) < 1.0d-12 .or. abs(eb - ea) < tol) exit
-
-          if (fa * fm <= 0.0_dp) then
-            eb = em
-            fb = fm
-          else
-            ea = em
-            fa = fm
-          end if
-        end do
-
-        e_star = 0.5_dp * (ea + eb)
-        call endpoint_and_nodes(e_star, l, fm, nodes_mid)
-
-        if (abs(e_star - last_root) > 1.0d-7) then
-          roots_found = roots_found + 1
-          last_root = e_star
-        end if
-
-        if (roots_found == rank_target) then
-          ok = .true.
-          return
+      if (ieee_is_finite(f_trial) .and. nodes_mid == target_nodes) then
+        if (abs(f_trial) < best_res) then
+          best_res = abs(f_trial)
+          best_e = e_trial
+          best_i = i
+          has_best = .true.
         end if
       end if
-
-      last_e = cur_e
-      last_f = cur_f
     end do
-  end subroutine find_state_energy_rank
+
+    if (.not. has_best) return
+
+    ! Refinamiento local simple alrededor del mejor punto de la malla de energia.
+    e_star = best_e
+    if (best_i > 1 .and. best_i < n_scan) then
+      e_left = e_lo + real(best_i - 2, dp) * de
+      e_right = e_lo + real(best_i, dp) * de
+
+      call endpoint_and_nodes(e_left, l, f_left, nodes_left)
+      call endpoint_and_nodes(e_right, l, f_right, nodes_right)
+
+      if (nodes_left == target_nodes .and. abs(f_left) < best_res) then
+        best_res = abs(f_left)
+        e_star = e_left
+      end if
+      if (nodes_right == target_nodes .and. abs(f_right) < best_res) then
+        best_res = abs(f_right)
+        e_star = e_right
+      end if
+    end if
+
+    if (de > tol) then
+      ! Mantiene compatibilidad con la firma original: aplica una sola correccion fina.
+      e_left = max(e_lo, e_star - 0.5_dp * de)
+      e_right = min(e_hi, e_star + 0.5_dp * de)
+      call endpoint_and_nodes(e_left, l, f_left, nodes_left)
+      call endpoint_and_nodes(e_right, l, f_right, nodes_right)
+      if (nodes_left == target_nodes .and. abs(f_left) < best_res) then
+        best_res = abs(f_left)
+        e_star = e_left
+      end if
+      if (nodes_right == target_nodes .and. abs(f_right) < best_res) then
+        best_res = abs(f_right)
+        e_star = e_right
+      end if
+    end if
+
+    ok = .true.
+  end subroutine find_state_energy_nodes
 
   subroutine integrate_full_state(e, l, r_sol)
     real(dp), intent(in) :: e

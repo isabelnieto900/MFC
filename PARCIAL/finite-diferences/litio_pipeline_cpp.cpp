@@ -14,7 +14,7 @@
 namespace
 {
 
-    constexpr int NPT = 2200;
+    constexpr int NPT = 16000;
     constexpr int NBMAX = 1000;
     constexpr double HARTREE_TO_EV = 27.211386245988;
     constexpr int ITMAX_ZBRENT = 100;

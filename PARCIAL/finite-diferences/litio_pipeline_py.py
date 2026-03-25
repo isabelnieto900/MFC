@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-NPT = 2200
+NPT = 16000
 NBMAX = 1000
 HARTREE_TO_EV = 27.211386245988
 ITMAX_ZBRENT = 100
