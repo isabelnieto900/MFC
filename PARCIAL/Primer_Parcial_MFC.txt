@@ -1,0 +1,153 @@
+Modelamiento Fı́sico Computacional                                       2026-1                                                     Primer Parcial
+
+
+
+
+                                            UNIVERSIDAD DISTRITAL FRANCISCO JOSE DE
+                                                                            CALDAS
+                                                                 Primer Parcial - Modelamiento Fı́sico Computacional
+                                                                                    Docente: Carlos Andrés Gómez Vasco
+
+
+
+
+ IMPORTANTE: Resuelva, dejando claro sus cálculos paso a paso y sin omitir detalle alguno. Realice los diagramas utilizando las herramientas necesarias
+ para su construcción. Incluso, de ser necesario, use colores para denotar diferencias en las situaciones a resolver.
+
+
+
+
+Nombre:                                                                                                      Grupo:
+
+
+                                            DESCRIPCIÓN DEL PARCIAL
+                                                                     (5.0 Puntos)
+
+  1. En el desarrollo de la Fı́sica Computacional contemporánea, la solución de un problema fı́sico no depende exclusivamente
+     del modelo teórico que lo describe, sino también de las estrategias numéricas utilizadas para resolverlo, del lenguaje de
+     programación empleado y, más recientemente, de la incorporación de técnicas de aprendizaje automático dentro del análisis
+     cientı́fico. El problema asignado con anterioridad y basado en el libro de Hernán Estrada, constituye un escenario adecua-
+     do para analizar cómo distintas aproximaciones computacionales pueden conducir a soluciones fı́sicamente equivalentes,
+     aunque con diferencias significativas en precisión, estabilidad numérica y costo computacional.
+
+      El presente parcial tiene como propósito asumir el rol de un fı́sico computacional que no solo implementa algoritmos, sino
+      que analiza crı́ticamente las decisiones metodológicas involucradas en la solución de un problema cientı́fico. Para ello, cada
+      grupo trabajará sobre el problema previamente asignado e implementado en Fortran, el cual será considerado como solución
+      de referencia. A partir de esta base, deberán diseñar una propuesta comparativa que permita estudiar el mismo sistema
+      fı́sico mediante métodos numéricos alternativos, técnicas modernas basadas en redes neuronales profundas y diferentes
+      lenguajes de programación orientados al cálculo cientı́fico.
+
+      En primer lugar, el grupo deberá presentar una descripción clara del problema fı́sico abordado, incluyendo el sistema
+      estudiado, las ecuaciones fundamentales involucradas, el Hamiltoniano correspondiente, las condiciones de frontera y las
+      aproximaciones introducidas dentro del esquema de solución. Esta sección debe evidenciar la comprensión fı́sica del modelo
+      y del procedimiento autoconsistente empleado para obtener la solución numérica. Asimismo, deberá describirse brevemente
+      la estrategia computacional utilizada en la implementación original en Fortran, identificando sus principales caracterı́sticas
+      y limitaciones.
+
+      Posteriormente, cada grupo deberá implementar al menos dos métodos numéricos adicionales que permitan resolver el
+      mismo problema fı́sico sin recurrir al esquema originalmente utilizado. Estos métodos podrán corresponder, por ejemplo, a
+      técnicas de diferencias finitas de mayor orden, métodos de disparo, enfoques espectrales, métodos variacionales numéricos,
+      procedimientos de minimización energética o estrategias de diagonalización matricial. La selección de los métodos deberá
+      justificarse desde el punto de vista matemático y fı́sico, analizando aspectos como estabilidad numérica, convergencia,
+      complejidad computacional y sensibilidad frente a los parámetros numéricos. El objetivo de esta etapa no consiste única-
+      mente en obtener una solución, sino en comprender cómo distintas aproximaciones influyen en la calidad del resultado fı́sico.
+
+      Como componente central del parcial, cada grupo deberá desarrollar una aproximación basada en una red neuronal profun-
+      da cuyo objetivo sea reproducir o aproximar una magnitud fı́sica obtenida previamente mediante la solución numérica del
+      problema. A diferencia de los métodos numéricos tradicionales, donde la solución se obtiene mediante procesos iterativos
+
+
+         UNIVERSIDAD DISTRITAL FRANCISCO JOSE DE CALDAS - Facultad Ciencias Matemáticas y Naturales
+Modelamiento Fı́sico Computacional                              2026-1                                                   Primer Parcial
+
+
+     que resuelven explı́citamente ecuaciones diferenciales o problemas variacionales, la red neuronal actuará como un modelo
+     sustituto, es decir, como un sistema capaz de aprender la relación funcional existente entre ciertas variables fı́sicas de
+     entrada y la solución producida por el algoritmo numérico.
+
+     En este contexto, el método previamente implementado no solo constituye una herramienta de cálculo, sino también un
+     generador de datos fı́sicos confiables. Las soluciones obtenidas numéricamente —por ejemplo la función de onda radial, el
+     potencial efectivo autoconsistente o la energı́a del estado fundamental— serán utilizadas como conjunto de entrenamiento
+     para la red neuronal. De esta manera, la red aprende a aproximar el comportamiento del solucionador numérico sin nece-
+     sidad de ejecutar nuevamente el proceso iterativo completo.
+
+     Dependiendo del problema abordado, el grupo podrá seleccionar la magnitud fı́sica que será aproximada por la red neuro-
+     nal. Entre las opciones más naturales se encuentran la función de onda, el potencial efectivo o la energı́a total del sistema.
+     Por ejemplo, si se decide aproximar la función de onda, la red neuronal recibirá como entrada la coordenada espacial (o
+     un conjunto de parámetros fı́sicos relevantes) y producirá como salida el valor estimado de la función de onda en dicho
+     punto. En este caso, el aprendizaje consiste en reconstruir una función continua a partir de datos discretos generados por
+     el método numérico.
+
+     El desarrollo de este modelo sustituto requiere que el grupo describa explı́citamente la arquitectura de la red neuronal em-
+     pleada. Esto incluye el número de capas ocultas, el número de neuronas por capa, las funciones de activación utilizadas y la
+     forma en que la información fluye desde la entrada hasta la salida. No se busca una arquitectura excesivamente compleja,
+     sino una elección razonada que permita comprender cómo la capacidad de representación de la red influye en la calidad de
+     la aproximación fı́sica.
+
+     Asimismo, deberá explicarse el proceso de entrenamiento del modelo. Este proceso consiste en ajustar los parámetros inter-
+     nos de la red neuronal mediante algoritmos de optimización que minimizan una función de pérdida. Dicha función cuantifica
+     la diferencia entre la solución obtenida por el(los) método(s) y la predicción generada por la red neuronal. Usualmente
+     se emplea el error cuadrático medio entre ambos resultados. Aunque podrán incorporarse restricciones fı́sicas adicionales,
+     como condiciones de frontera o normalización de la función de onda, con el fin de garantizar coherencia fı́sica en la solución
+     aprendida.
+
+     El grupo deberá también establecer criterios claros de validación del modelo. Para ello, el conjunto de datos deberá divi-
+     dirse en subconjuntos de entrenamiento y validación que permitan evaluar si la red neuronal realmente ha aprendido el
+     comportamiento fı́sico del sistema o simplemente ha memorizado los datos suministrados. Resulta fundamental analizar
+     la capacidad de generalización del modelo, es decir, su desempeño al predecir valores en regiones que no fueron utilizadas
+     durante el entrenamiento.
+
+     Durante el desarrollo del modelo neuronal es esperable que surjan dificultades asociadas al proceso de aprendizaje, tales
+     como sobreajuste, inestabilidad numérica, dependencia de los hiperparámetros o incapacidad de reproducir adecuadamente
+     ciertas regiones de la solución fı́sica. Estas dificultades deberán documentarse y analizarse, ya que constituyen parte esencial
+     del aprendizaje en fı́sica computacional moderna. El objetivo no es únicamente obtener una aproximación precisa, sino
+     comprender las limitaciones prácticas del uso de redes neuronales en problemas cientı́ficos.
+
+     Realice un análisis crı́tico del papel de las redes neuronales dentro de la fı́sica computacional. En particular, deberá discutir-
+     se en qué medida un modelo basado en aprendizaje automático puede complementar los métodos numéricos tradicionales,
+     cuándo resulta ventajoso emplearlo y cuáles son sus limitaciones desde el punto de vista fı́sico y computacional. Esta refle-
+     xión debe permitir reconocer que las redes neuronales no reemplazan el modelo fı́sico subyacente, sino que pueden funcionar
+     como herramientas de aceleración o aproximación dentro de problemas donde los métodos clásicos resultan computacio-
+     nalmente costosos.
+
+     Adicionalmente, el parcial deberá incluir una comparación entre distintos lenguajes de programación empleados en compu-
+     tación cientı́fica. El problema deberá analizarse considerando la implementación original en Fortran y una implementación
+     adicional o análisis comparativo en C++ y Python. Esta comparación deberá contemplar aspectos relacionados con el
+     tiempo de ejecución, eficiencia computacional, facilidad de desarrollo, disponibilidad de librerı́as cientı́ficas, legibilidad del
+     código y posibilidades de escalabilidad o paralelización. El propósito de esta actividad es evidenciar cómo la elección del
+
+
+       UNIVERSIDAD DISTRITAL FRANCISCO JOSE DE CALDAS - Facultad Ciencias Matemáticas y Naturales
+Modelamiento Fı́sico Computacional                             2026-1                                                   Primer Parcial
+
+
+     lenguaje también constituye una decisión relevante dentro del proceso de modelación cientı́fica.
+
+     Una vez obtenidos los resultados mediante los diferentes enfoques, el grupo deberá realizar un análisis comparativo integral
+     apoyado en tablas y representaciones gráficas que permitan evaluar tanto el desempeño fı́sico como computacional de cada
+     método. Entre los criterios mı́nimos de comparación deberán incluirse la energı́a obtenida, el error relativo respecto a la
+     solución de referencia, el comportamiento de convergencia del procedimiento iterativo, el tiempo total de cálculo, el número
+     de iteraciones requeridas y, en el caso del modelo neuronal, métricas asociadas al proceso de entrenamiento tales como
+     el error cuadrático medio y la estabilidad del aprendizaje. Esta etapa debe orientarse hacia la interpretación fı́sica de los
+     resultados y no limitarse únicamente a la presentación de datos numéricos.
+
+     Se debe construir un discusión crı́tica en la cual el grupo reflexione sobre preguntas fundamentales tales como si todos
+     los métodos conducen a la misma descripción fı́sica del sistema, cuál estrategia ofrece la mejor relación entre precisión y
+     costo computacional, en qué medida una red neuronal puede complementar o sustituir métodos numéricos clásicos y cuál
+     lenguaje de programación resulta más adecuado en diferentes contextos de la fı́sica computacional moderna. Se espera que
+     las conclusiones evidencien capacidad de análisis, argumentación cientı́fica y comprensión del vı́nculo existente entre fı́sica,
+     matemática y computación.
+
+     Como producto final, cada grupo deberá realizar una presentación oral en la cual el grupo exponga las decisiones meto-
+     dológicas adoptadas y las conclusiones principales derivadas del estudio comparativo. Demostrando que se fortaleció su
+     capacidad para analizar problemas fı́sicos desde una perspectiva computacional integral, implementar soluciones cientı́ficas
+     en múltiples entornos de programación, integrar herramientas modernas de aprendizaje automático dentro del análisis
+     fı́sico y evaluar crı́ticamente la eficiencia y pertinencia de distintas estrategias numéricas. De esta manera, el parcial busca
+     aproximar al estudiante a prácticas reales de investigación en Fı́sica Computacional, donde la elección del método, del
+     algoritmo y de la herramienta computacional constituye parte esencial del proceso cientı́fico. (5.0 puntos)
+
+
+
+
+       UNIVERSIDAD DISTRITAL FRANCISCO JOSE DE CALDAS - Facultad Ciencias Matemáticas y Naturales
+

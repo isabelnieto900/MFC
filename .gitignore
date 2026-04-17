@@ -1,3 +1,27 @@
+
+# Ignorar archivos generados en PARCIAL (general)
+PARCIAL/**/*.pt
+PARCIAL/**/*.pdf
+PARCIAL/**/*.csv
+PARCIAL/**/*.dat
+PARCIAL/**/*.DAT
+PARCIAL/**/*.out
+PARCIAL/**/*.mod
+PARCIAL/**/*.exe
+PARCIAL/**/*.so
+PARCIAL/**/*.a
+PARCIAL/**/*.pyc
+PARCIAL/**/*.pyo
+PARCIAL/**/*.log
+PARCIAL/**/*.tmp
+PARCIAL/**/*.bak
+PARCIAL/**/*.swp
+PARCIAL/**/*.swo
+PARCIAL/**/*.class
+PARCIAL/**/*.dll
+PARCIAL/**/*.dylib
+PARCIAL/**/*.pdf:Zone.Identifier
+
 venv/*
 # Fortran and C/C++ executables
 *.exe
@@ -33,3 +57,26 @@ benchmark
 __pycache__/
 *.ipynb_checkpoints/
 PARCIAL/PINN/tuner_dir/litio_wavefunctions
+
+PARCIAL/**/*.pt
+PARCIAL/**/*.pdf
+# Ignorar archivos generados en PARCIAL
+PARCIAL/**/*.csv
+PARCIAL/**/*.dat
+PARCIAL/**/*.DAT
+PARCIAL/**/*.out
+PARCIAL/**/*.mod
+PARCIAL/**/*.exe
+PARCIAL/**/*.so
+PARCIAL/**/*.a
+PARCIAL/**/*.pyc
+PARCIAL/**/*.pyo
+PARCIAL/**/*.log
+PARCIAL/**/*.tmp
+PARCIAL/**/*.bak
+PARCIAL/**/*.swp
+PARCIAL/**/*.swo
+PARCIAL/**/*.class
+PARCIAL/**/*.dll
+PARCIAL/**/*.dylib
+PARCIAL/**/*.pdf:Zone.Identifier
