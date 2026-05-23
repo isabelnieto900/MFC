@@ -80,3 +80,7 @@ PARCIAL/**/*.class
 PARCIAL/**/*.dll
 PARCIAL/**/*.dylib
 PARCIAL/**/*.pdf:Zone.Identifier
+guitarra/
+otros/espectro_fft_datos.csv
+otros/espectro_fft_interactivo.html
+output.png
